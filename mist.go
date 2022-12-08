@@ -21,7 +21,7 @@ type Handlers map[string]interface{}
 
 type iFunc func()
 
-func mistService(handlers Handlers) {
+func MistService(handlers Handlers) {
 	action := os.Args[len(os.Args)-2]
 	handler := handlers[action]
 	if handler != nil {
@@ -32,7 +32,7 @@ func mistService(handlers Handlers) {
 	}
 }
 
-func mistServiceWithInit(handlers Handlers, init iFunc) {
+func MistServiceWithInit(handlers Handlers, init iFunc) {
 	action := os.Args[len(os.Args)-2]
 	handler := handlers[action]
 	if handler != nil {
@@ -46,7 +46,7 @@ func mistServiceWithInit(handlers Handlers, init iFunc) {
 	}
 }
 
-func postToRapid(event string, reply MistReply) {
+func PostToRapid(event string, reply MistReply) {
 	body, _ := json.Marshal(reply)
 	fmt.Println("posting %s to (%s/%s)", body, os.Getenv("RAPID"), event)
 	resp, err := http.Post(fmt.Sprintf("%s/%s", os.Getenv("RAPID"), event), "application/json", bytes.NewBuffer(body))
