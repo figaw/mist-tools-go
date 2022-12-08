@@ -8,6 +8,9 @@ import (
 	"os"
 )
 
+type Payload interface{}
+type Reply interface{}
+
 type Envelope struct {
 	messageId string  `json: messageId`
 	traceId   string  `json: traceId`
