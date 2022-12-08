@@ -8,13 +8,10 @@ import (
 	"os"
 )
 
-type MistPayload interface{}
-type MistReply interface{}
-
 type Envelope struct {
 	messageId string  `json: messageId`
 	traceId   string  `json: traceId`
-	payload   MistPayload `json: payload`
+	payload   interface{} `json: payload`
 }
 
 type Handlers map[string]interface{}
@@ -28,7 +25,7 @@ func MistService(handlers Handlers) {
 		fmt.Println("running handler for %s", action)
 		var envelope Envelope
 		json.Unmarshal([]byte(os.Args[len(os.Args)-1]), &envelope)
-		handler.(func(MistPayload))(envelope.payload)
+		handler.(func(interface{}))(envelope.payload)
 	}
 }
 
@@ -39,14 +36,14 @@ func MistServiceWithInit(handlers Handlers, init iFunc) {
 		fmt.Println("running handler for %s", action)
 		var envelope Envelope
 		json.Unmarshal([]byte(os.Args[len(os.Args)-1]), &envelope)
-		handler.(func(MistPayload))(envelope.payload)
+		handler.(func(interface{}))(envelope.payload)
 	} else if init != nil {
 		fmt.Println("running init")
 		init()
 	}
 }
 
-func PostToRapid(event string, reply MistReply) {
+func PostToRapid(event string, reply interface{}) {
 	body, _ := json.Marshal(reply)
 	fmt.Println("posting %s to (%s/%s)", body, os.Getenv("RAPID"), event)
 	resp, err := http.Post(fmt.Sprintf("%s/%s", os.Getenv("RAPID"), event), "application/json", bytes.NewBuffer(body))
