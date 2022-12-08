@@ -25,7 +25,7 @@ func MistService(handlers Handlers) {
 		fmt.Println("running handler for %s", action)
 		var envelope Envelope
 		json.Unmarshal([]byte(os.Args[len(os.Args)-1]), &envelope)
-		handler.(func(interface{}))(envelope.payload)
+		handler.(interface{})(envelope.payload)
 	}
 }
 
@@ -36,7 +36,7 @@ func MistServiceWithInit(handlers Handlers, init iFunc) {
 		fmt.Println("running handler for %s", action)
 		var envelope Envelope
 		json.Unmarshal([]byte(os.Args[len(os.Args)-1]), &envelope)
-		handler.(func(interface{}))(envelope.payload)
+		handler.(interface{})(envelope.payload)
 	} else if init != nil {
 		fmt.Println("running init")
 		init()
