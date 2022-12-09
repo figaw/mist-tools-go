@@ -6,47 +6,62 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"io"
 )
 
-type Envelope struct {
-	messageId string  `json: messageId`
-	traceId   string  `json: traceId`
-	payload   interface{} `json: payload`
+type envelope struct {
+	MessageId string `json:"messageId"`
+	TraceId   string `json: traceId`
+	Payload   string `json: payload`
 }
 
-type Handlers map[string]interface{}
-
+type handlers map[string]func(string)
 type iFunc func()
 
-func MistService(handlers Handlers) {
+func MistService(hs handlers) {
 	action := os.Args[len(os.Args)-2]
-	handler := handlers[action]
+	handler := hs[action]
 	if handler != nil {
-		fmt.Println("running handler for %s", action)
-		var envelope Envelope
-		json.Unmarshal([]byte(os.Args[len(os.Args)-1]), &envelope)
-		handler.(interface{})(envelope.payload)
+		invokeHandler(action, handler)
 	}
 }
 
-func MistServiceWithInit(handlers Handlers, init iFunc) {
+func MistServiceWithInit(hs handlers, init iFunc) {
 	action := os.Args[len(os.Args)-2]
-	handler := handlers[action]
+	handler := hs[action]
 	if handler != nil {
-		fmt.Println("running handler for %s", action)
-		var envelope Envelope
-		json.Unmarshal([]byte(os.Args[len(os.Args)-1]), &envelope)
-		handler.(interface{})(envelope.payload)
+		invokeHandler(action, handler)
 	} else if init != nil {
 		fmt.Println("running init")
 		init()
 	}
 }
 
-func PostToRapid(event string, reply interface{}) {
+func invokeHandler(action string, handler func(string)) {
+	fmt.Printf("running handler for %s\n", action)
+	var e envelope
+	err := json.Unmarshal([]byte(os.Args[len(os.Args)-1]), &e)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Printf("contents of decoded json is: %#v\r\n", e)
+	fmt.Println(e.Payload)
+
+	handler(e.Payload)
+}
+
+func PostToRapid[T interface{}](event string, reply T) {
+	fmt.Printf("contents of reply is: %#v\r\n", reply)
+
 	body, _ := json.Marshal(reply)
-	fmt.Println("posting %s to (%s/%s)", body, os.Getenv("RAPID"), event)
-	resp, err := http.Post(fmt.Sprintf("%s/%s", os.Getenv("RAPID"), event), "application/json", bytes.NewBuffer(body))
+	fmt.Printf("posting %s to (%s/%s)\n", string(body), os.Getenv("RAPID"), event)
+
+	PostBodyToRapid(event, bytes.NewBuffer(body))
+}
+
+func PostBodyToRapid(event string, body io.Reader) {
+	resp, err := http.Post(fmt.Sprintf("%s/%s", os.Getenv("RAPID"), event), "application/json", body)
 	if err != nil {
 		fmt.Println("Get failed with error: ", err)
 	}
